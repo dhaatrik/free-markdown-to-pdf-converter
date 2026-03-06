@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<body>
+  <div id="root"></div>
+  <script type="module">
+    import React from 'react';
+    import { createRoot } from 'react-dom/client';
+    import App from './App.tsx';
+
+    const root = createRoot(document.getElementById('root'));
+    let startTime = performance.now();
+    let renderCount = 0;
+    let totalTime = 0;
+
+    function renderApp() {
+      root.render(<App />);
+      requestAnimationFrame(() => {
+        const endTime = performance.now();
+        if (renderCount > 0) {
+          totalTime += (endTime - startTime);
+        }
+
+        if (renderCount < 100) {
+          renderCount++;
+          startTime = performance.now();
+          // Find textarea and trigger input event
+          const textarea = document.querySelector('textarea');
+          if (textarea) {
+             const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, "value").set;
+             nativeInputValueSetter.call(textarea, textarea.value + "a");
+             textarea.dispatchEvent(new Event('input', { bubbles: true}));
+          }
+          renderApp();
+        } else {
+          console.log("Average time:", totalTime / 100);
+          document.body.innerHTML += `<div id="benchmark-result">${totalTime / 100}</div>`;
+        }
+      });
+    }
+
+    renderApp();
+  </script>
+</body>
+</html>

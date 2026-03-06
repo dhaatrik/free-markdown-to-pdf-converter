@@ -18,6 +18,8 @@ function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+const remarkPlugins = [remarkGfm];
+
 const DEFAULT_MARKDOWN = `
 # Markdown to PDF Converter
 
@@ -655,7 +657,7 @@ const App: React.FC = () => {
                       </code>
                     )
                   }
-                }}
+                }), [theme])}
               >
                 {markdown}
               </ReactMarkdown>
