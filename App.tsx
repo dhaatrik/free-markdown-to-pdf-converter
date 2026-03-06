@@ -253,7 +253,15 @@ const App: React.FC = () => {
     }
   }, [markdown, backgroundColor, margin, pdfHeader, pdfFooter]);
   
-  const lineCount = markdown.split('\n').length;
+  const lineCount = React.useMemo(() => {
+    let count = 0;
+    let pos = markdown.indexOf('\n');
+    while (pos !== -1) {
+      count++;
+      pos = markdown.indexOf('\n', pos + 1);
+    }
+    return count + 1;
+  }, [markdown]);
 
   return (
     <div className={cn(
