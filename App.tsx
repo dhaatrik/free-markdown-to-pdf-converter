@@ -5,9 +5,8 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus, coy } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { jsPDF } from 'jspdf';
-import { 
-  Settings, Undo, Redo, Download, FileText, Trash2, 
+import {
+  Settings, Undo, Redo, Download, FileText, Trash2,
   Bold, Italic, List, ListOrdered, Quote, Code, Link, Image as ImageIcon,
   Moon, Sun
 } from 'lucide-react';
@@ -67,7 +66,7 @@ const App: React.FC = () => {
   const [showLineNumbers, setShowLineNumbers] = useState<boolean>(true);
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
   const [uiTheme, setUiTheme] = useState<'light' | 'dark'>('light');
-  
+
   const previewRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<HTMLTextAreaElement>(null);
   const lineNumbersRef = useRef<HTMLDivElement>(null);
@@ -93,7 +92,7 @@ const App: React.FC = () => {
       isUndoRedo.current = false;
       return;
     }
-    
+
     const handler = setTimeout(() => {
       if (markdown !== history[historyIndex]) {
         const newHistory = history.slice(0, historyIndex + 1);
@@ -132,7 +131,7 @@ const App: React.FC = () => {
       setMarkdown(history[newIndex]);
     }
   }, [history, historyIndex]);
-  
+
   const handleEditorScroll = (e: React.UIEvent<HTMLTextAreaElement>) => {
     if (lineNumbersRef.current) {
       lineNumbersRef.current.scrollTop = e.currentTarget.scrollTop;
@@ -156,10 +155,10 @@ const App: React.FC = () => {
         handleRedo();
       }
     };
-    
+
     const editorEl = editorRef.current;
     editorEl?.addEventListener('keydown', handleKeyDown);
-    
+
     return () => {
       editorEl?.removeEventListener('keydown', handleKeyDown);
     };
@@ -173,82 +172,26 @@ const App: React.FC = () => {
     const end = textarea.selectionEnd;
     const selectedText = markdown.substring(start, end);
     const newText = markdown.substring(0, start) + before + selectedText + after + markdown.substring(end);
-    
+
     setMarkdown(newText);
-    
+
     setTimeout(() => {
       textarea.focus();
       textarea.setSelectionRange(start + before.length, end + before.length);
     }, 0);
   };
 
-  const handleDownloadPdf = useCallback(async () => {
+  const handleDownloadPdf = useCallback(() => {
     if (!previewRef.current || markdown.trim() === '') return;
 
     setIsGenerating(true);
-    try {
-      const pdf = new jsPDF({
-        orientation: 'p',
-        unit: 'pt',
-        format: 'a4',
-      });
-
-      const originalBg = previewRef.current.style.backgroundColor;
-      previewRef.current.style.backgroundColor = backgroundColor;
-
-      const marginPt = margin * 2.83465; // 1 mm = 2.83465 pt
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const contentWidth = pdfWidth - (marginPt * 2);
-
-      await pdf.html(previewRef.current, {
-        x: marginPt,
-        y: marginPt,
-        width: contentWidth,
-        windowWidth: previewRef.current.scrollWidth,
-        autoPaging: 'text',
-        html2canvas: {
-          scale: contentWidth / previewRef.current.scrollWidth,
-          useCORS: true,
-          logging: false,
-        }
-      });
-
-      const pageCount = pdf.internal.getNumberOfPages();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      
-      pdf.setFontSize(10);
-      pdf.setTextColor(128, 128, 128);
-      
-      for (let i = 1; i <= pageCount; i++) {
-        pdf.setPage(i);
-        
-        const parsedHeader = pdfHeader
-          .replace(/{page}/g, i.toString())
-          .replace(/{pages}/g, pageCount.toString());
-          
-        const parsedFooter = pdfFooter
-          .replace(/{page}/g, i.toString())
-          .replace(/{pages}/g, pageCount.toString());
-
-        if (parsedHeader) {
-          pdf.text(parsedHeader, pdfWidth / 2, Math.max(marginPt / 2, 20), { align: 'center' });
-        }
-        if (parsedFooter) {
-          pdf.text(parsedFooter, pdfWidth / 2, pdfHeight - Math.max(marginPt / 2, 20), { align: 'center' });
-        }
-      }
-
-      pdf.save('document.pdf');
-
-      previewRef.current.style.backgroundColor = originalBg;
-    } catch (error) {
-      console.error('Error generating PDF:', error);
-      alert('An error occurred while generating the PDF. Please try again.');
-    } finally {
+    // Use setTimeout to allow the UI to update the button state before blocking the main thread with print()
+    setTimeout(() => {
+      window.print();
       setIsGenerating(false);
-    }
-  }, [markdown, backgroundColor, margin, pdfHeader, pdfFooter]);
-  
+    }, 150);
+  }, [markdown]);
+
   const lineCount = React.useMemo(() => {
     let count = 0;
     let pos = markdown.indexOf('\n');
@@ -264,6 +207,36 @@ const App: React.FC = () => {
       "flex flex-col h-screen font-sans overflow-hidden print:h-auto print:bg-white print:overflow-visible transition-colors duration-200",
       uiTheme === 'dark' ? "bg-neutral-900 text-neutral-100 dark" : "bg-neutral-50 text-neutral-900"
     )}>
+      {/* Print styles */}
+      <style type="text/css" media="print">
+        {`
+          @page {
+            size: auto;
+            margin: ${margin}mm;
+          }
+          body {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+            background-color: ${backgroundColor} !important;
+          }
+          .prose-print-container {
+            padding: 0 !important;
+          }
+        `}
+      </style>
+
+      {/* Print Header and Footer */}
+      {(pdfHeader || pdfFooter) && (
+        <div className="hidden print:flex fixed inset-0 flex-col justify-between pointer-events-none z-50">
+          <div className="text-center text-[10pt] text-gray-500 w-full font-sans" style={{ marginTop: `-${margin / 2}mm` }}>
+            {pdfHeader.replace(/Page {page} of {pages}/gi, '').replace(/{page}/g, '').replace(/{pages}/g, '')}
+          </div>
+          <div className="text-center text-[10pt] text-gray-500 w-full font-sans" style={{ marginBottom: `-${margin / 2}mm` }}>
+            {pdfFooter.replace(/Page {page} of {pages}/gi, '').replace(/{page}/g, '').replace(/{pages}/g, '')}
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <header className={cn(
         "border-b px-6 py-3 flex items-center justify-between shrink-0 z-20 print:hidden transition-colors duration-200",
@@ -278,7 +251,7 @@ const App: React.FC = () => {
             uiTheme === 'dark' ? "text-neutral-100" : "text-neutral-800"
           )}>MarkPDF</h1>
         </div>
-        
+
         <div className="flex items-center gap-2">
           <button
             onClick={() => setUiTheme(uiTheme === 'light' ? 'dark' : 'light')}
@@ -292,22 +265,22 @@ const App: React.FC = () => {
           </button>
 
           <div className="relative">
-            <button 
+            <button
               onClick={() => setIsSettingsOpen(!isSettingsOpen)}
               className={cn(
                 "p-2 rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500",
-                isSettingsOpen 
-                  ? (uiTheme === 'dark' ? "bg-indigo-900/30 text-indigo-400" : "bg-indigo-50 text-indigo-600") 
+                isSettingsOpen
+                  ? (uiTheme === 'dark' ? "bg-indigo-900/30 text-indigo-400" : "bg-indigo-50 text-indigo-600")
                   : (uiTheme === 'dark' ? "text-neutral-400 hover:bg-neutral-800 hover:text-neutral-200" : "text-neutral-500 hover:bg-neutral-100 hover:text-neutral-800")
               )}
               title="Settings"
             >
               <Settings className="w-5 h-5" />
             </button>
-            
+
             <AnimatePresence>
               {isSettingsOpen && (
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0, y: 10, scale: 0.95 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 10, scale: 0.95 }}
@@ -327,9 +300,9 @@ const App: React.FC = () => {
                         "block text-xs font-medium mb-1",
                         uiTheme === 'dark' ? "text-neutral-400" : "text-neutral-500"
                       )}>Typography</label>
-                      <select 
-                        value={fontFamily} 
-                        onChange={(e) => setFontFamily(e.target.value)} 
+                      <select
+                        value={fontFamily}
+                        onChange={(e) => setFontFamily(e.target.value)}
                         className={cn(
                           "w-full text-sm border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent",
                           uiTheme === 'dark' ? "bg-neutral-800 border-neutral-700 text-neutral-200" : "bg-neutral-50 border-neutral-200 text-neutral-900"
@@ -340,17 +313,17 @@ const App: React.FC = () => {
                         <option value="monospace">JetBrains Mono (Monospace)</option>
                       </select>
                     </div>
-                    
+
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className={cn(
                           "block text-xs font-medium mb-1",
                           uiTheme === 'dark' ? "text-neutral-400" : "text-neutral-500"
                         )}>Font Size (px)</label>
-                        <input 
-                          type="number" 
-                          value={fontSize} 
-                          onChange={(e) => setFontSize(Number(e.target.value))} 
+                        <input
+                          type="number"
+                          value={fontSize}
+                          onChange={(e) => setFontSize(Number(e.target.value))}
                           className={cn(
                             "w-full text-sm border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent",
                             uiTheme === 'dark' ? "bg-neutral-800 border-neutral-700 text-neutral-200" : "bg-neutral-50 border-neutral-200 text-neutral-900"
@@ -362,10 +335,10 @@ const App: React.FC = () => {
                           "block text-xs font-medium mb-1",
                           uiTheme === 'dark' ? "text-neutral-400" : "text-neutral-500"
                         )}>Margin (mm)</label>
-                        <input 
-                          type="number" 
-                          value={margin} 
-                          onChange={(e) => setMargin(Number(e.target.value))} 
+                        <input
+                          type="number"
+                          value={margin}
+                          onChange={(e) => setMargin(Number(e.target.value))}
                           className={cn(
                             "w-full text-sm border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent",
                             uiTheme === 'dark' ? "bg-neutral-800 border-neutral-700 text-neutral-200" : "bg-neutral-50 border-neutral-200 text-neutral-900"
@@ -373,7 +346,7 @@ const App: React.FC = () => {
                         />
                       </div>
                     </div>
-                    
+
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className={cn(
@@ -384,11 +357,11 @@ const App: React.FC = () => {
                           "flex items-center gap-2 border rounded-md px-2 py-1",
                           uiTheme === 'dark' ? "bg-neutral-800 border-neutral-700" : "bg-neutral-50 border-neutral-200"
                         )}>
-                          <input 
-                            type="color" 
-                            value={textColor} 
-                            onChange={(e) => setTextColor(e.target.value)} 
-                            className="w-6 h-6 rounded cursor-pointer border-0 p-0 bg-transparent" 
+                          <input
+                            type="color"
+                            value={textColor}
+                            onChange={(e) => setTextColor(e.target.value)}
+                            className="w-6 h-6 rounded cursor-pointer border-0 p-0 bg-transparent"
                           />
                           <span className={cn(
                             "text-xs uppercase",
@@ -405,11 +378,11 @@ const App: React.FC = () => {
                           "flex items-center gap-2 border rounded-md px-2 py-1",
                           uiTheme === 'dark' ? "bg-neutral-800 border-neutral-700" : "bg-neutral-50 border-neutral-200"
                         )}>
-                          <input 
-                            type="color" 
-                            value={backgroundColor} 
-                            onChange={(e) => setBackgroundColor(e.target.value)} 
-                            className="w-6 h-6 rounded cursor-pointer border-0 p-0 bg-transparent" 
+                          <input
+                            type="color"
+                            value={backgroundColor}
+                            onChange={(e) => setBackgroundColor(e.target.value)}
+                            className="w-6 h-6 rounded cursor-pointer border-0 p-0 bg-transparent"
                           />
                           <span className={cn(
                             "text-xs uppercase",
@@ -425,10 +398,10 @@ const App: React.FC = () => {
                           "block text-xs font-medium mb-1",
                           uiTheme === 'dark' ? "text-neutral-400" : "text-neutral-500"
                         )}>PDF Header Text</label>
-                        <input 
-                          type="text" 
-                          value={pdfHeader} 
-                          onChange={(e) => setPdfHeader(e.target.value)} 
+                        <input
+                          type="text"
+                          value={pdfHeader}
+                          onChange={(e) => setPdfHeader(e.target.value)}
                           placeholder="e.g., Confidential Document"
                           className={cn(
                             "w-full text-sm border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent",
@@ -441,10 +414,10 @@ const App: React.FC = () => {
                           "block text-xs font-medium mb-1",
                           uiTheme === 'dark' ? "text-neutral-400" : "text-neutral-500"
                         )}>PDF Footer Text</label>
-                        <input 
-                          type="text" 
-                          value={pdfFooter} 
-                          onChange={(e) => setPdfFooter(e.target.value)} 
+                        <input
+                          type="text"
+                          value={pdfFooter}
+                          onChange={(e) => setPdfFooter(e.target.value)}
                           placeholder="e.g., Page {page} of {pages}"
                           className={cn(
                             "w-full text-sm border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent",
@@ -453,7 +426,7 @@ const App: React.FC = () => {
                         />
                       </div>
                     </div>
-                    
+
                     <div className={cn(
                       "pt-4 border-t flex items-center justify-between",
                       uiTheme === 'dark' ? "border-neutral-800" : "border-neutral-100"
@@ -462,9 +435,9 @@ const App: React.FC = () => {
                         "text-sm font-medium",
                         uiTheme === 'dark' ? "text-neutral-300" : "text-neutral-700"
                       )}>Code Block Theme</label>
-                      <select 
-                        value={theme} 
-                        onChange={(e) => setTheme(e.target.value as 'light' | 'dark')} 
+                      <select
+                        value={theme}
+                        onChange={(e) => setTheme(e.target.value as 'light' | 'dark')}
                         className={cn(
                           "text-sm border rounded-md px-3 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent",
                           uiTheme === 'dark' ? "bg-neutral-800 border-neutral-700 text-neutral-200" : "bg-neutral-50 border-neutral-200 text-neutral-900"
@@ -483,18 +456,18 @@ const App: React.FC = () => {
                         "text-sm font-medium",
                         uiTheme === 'dark' ? "text-neutral-300" : "text-neutral-700"
                       )}>Show Line Numbers</label>
-                      <button 
+                      <button
                         onClick={() => setShowLineNumbers(!showLineNumbers)}
                         className={cn(
                           "relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2",
                           showLineNumbers ? "bg-indigo-600" : (uiTheme === 'dark' ? "bg-neutral-700" : "bg-neutral-200")
                         )}
                       >
-                        <span 
+                        <span
                           className={cn(
                             "inline-block h-3 w-3 transform rounded-full bg-white transition-transform",
                             showLineNumbers ? "translate-x-5" : "translate-x-1"
-                          )} 
+                          )}
                         />
                       </button>
                     </div>
@@ -509,9 +482,9 @@ const App: React.FC = () => {
             uiTheme === 'dark' ? "bg-neutral-800" : "bg-neutral-200"
           )}></div>
 
-          <button 
-            onClick={handleDownloadPdf} 
-            disabled={isGenerating || markdown.trim() === ''} 
+          <button
+            onClick={handleDownloadPdf}
+            disabled={isGenerating || markdown.trim() === ''}
             className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 disabled:bg-indigo-400 disabled:cursor-not-allowed transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
           >
             {isGenerating ? (
@@ -602,7 +575,7 @@ const App: React.FC = () => {
           "flex-1 lg:w-1/2 overflow-y-auto p-4 sm:p-8 min-h-0 min-w-0 custom-scrollbar print:block print:w-full print:p-0 print:m-0 print:overflow-visible print:bg-transparent transition-colors duration-200",
           uiTheme === 'dark' ? "bg-neutral-950" : "bg-neutral-100/50"
         )}>
-          <div 
+          <div
             className={cn(
               "w-full max-w-[210mm] mx-auto shadow-sm border rounded-sm overflow-hidden transition-all duration-300 ease-in-out print:max-w-none print:shadow-none print:border-none print:m-0",
               uiTheme === 'dark' ? "bg-neutral-900 border-neutral-800" : "bg-white border-neutral-200"
@@ -611,7 +584,7 @@ const App: React.FC = () => {
           >
             <div
               ref={previewRef}
-              className="prose max-w-none print:max-w-none"
+              className="prose max-w-none print:max-w-none prose-print-container"
               style={{
                 fontFamily: fontFamily === 'sans-serif' ? 'Inter, sans-serif' : fontFamily === 'serif' ? '"Playfair Display", serif' : '"JetBrains Mono", monospace',
                 fontSize: `${fontSize}px`,
@@ -621,17 +594,17 @@ const App: React.FC = () => {
                 minHeight: '100%',
               }}
             >
-              <ReactMarkdown 
+              <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
                 components={{
-                  a({node, href, children, ...props}: any) {
+                  a({ node, href, children, ...props }: any) {
                     return <a href={href} target="_blank" rel="noopener noreferrer" {...props}>{children}</a>;
                   },
-                  img({node, src, alt, ...props}: any) {
+                  img({ node, src, alt, ...props }: any) {
                     if (!src) return <span className="text-neutral-400 italic border border-dashed border-neutral-300 px-2 py-1 rounded inline-block text-sm">[{alt || 'Image without URL'}]</span>;
                     return <img src={src} alt={alt} {...props} referrerPolicy="no-referrer" />;
                   },
-                  code({node, inline, className, children, ...props}: any) {
+                  code({ node, inline, className, children, ...props }: any) {
                     const match = /language-(\w+)/.exec(className || '')
                     return !inline && match ? (
                       <SyntaxHighlighter
@@ -652,7 +625,7 @@ const App: React.FC = () => {
                       </code>
                     )
                   }
-                }), [theme])}
+                }}
               >
                 {markdown}
               </ReactMarkdown>
@@ -660,7 +633,7 @@ const App: React.FC = () => {
           </div>
         </div>
       </main>
-    </div>
+    </div >
   );
 };
 

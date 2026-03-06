@@ -50,7 +50,7 @@ Make sure you have [Node.js](https://nodejs.org/) installed on your machine.
    ```
 
 4. **Open in browser:**
-   Open your browser and navigate to the URL provided in the terminal (usually `http://localhost:5173`).
+   Open your browser and navigate to the URL provided in the terminal (usually `http://localhost:3000`).
 
 ### Building for Production
 To build the app for production, run:
