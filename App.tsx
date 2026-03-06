@@ -6,7 +6,6 @@ import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus, coy } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { jsPDF } from 'jspdf';
-import html2canvas from 'html2canvas';
 import { 
   Settings, Undo, Redo, Download, FileText, Trash2, 
   Bold, Italic, List, ListOrdered, Quote, Code, Link, Image as ImageIcon,
