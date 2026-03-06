@@ -19,6 +19,8 @@ function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+const remarkPlugins = [remarkGfm];
+
 const DEFAULT_MARKDOWN = `
 # Markdown to PDF Converter
 
@@ -626,8 +628,8 @@ const App: React.FC = () => {
               }}
             >
               <ReactMarkdown 
-                remarkPlugins={[remarkGfm]}
-                components={{
+                remarkPlugins={remarkPlugins}
+                components={React.useMemo(() => ({
                   img({node, src, alt, ...props}: any) {
                     if (!src) return <span className="text-neutral-400 italic border border-dashed border-neutral-300 px-2 py-1 rounded inline-block text-sm">[{alt || 'Image without URL'}]</span>;
                     return <img src={src} alt={alt} {...props} referrerPolicy="no-referrer" />;
@@ -653,7 +655,7 @@ const App: React.FC = () => {
                       </code>
                     )
                   }
-                }}
+                }), [theme])}
               >
                 {markdown}
               </ReactMarkdown>
