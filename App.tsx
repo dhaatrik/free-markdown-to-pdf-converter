@@ -6,7 +6,6 @@ import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus, coy } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { jsPDF } from 'jspdf';
-import html2canvas from 'html2canvas';
 import { 
   Settings, Undo, Redo, Download, FileText, Trash2, 
   Bold, Italic, List, ListOrdered, Quote, Code, Link, Image as ImageIcon,
@@ -628,8 +627,11 @@ const App: React.FC = () => {
               }}
             >
               <ReactMarkdown 
-                remarkPlugins={remarkPlugins}
-                components={React.useMemo(() => ({
+                remarkPlugins={[remarkGfm]}
+                components={{
+                  a({node, href, children, ...props}: any) {
+                    return <a href={href} target="_blank" rel="noopener noreferrer" {...props}>{children}</a>;
+                  },
                   img({node, src, alt, ...props}: any) {
                     if (!src) return <span className="text-neutral-400 italic border border-dashed border-neutral-300 px-2 py-1 rounded inline-block text-sm">[{alt || 'Image without URL'}]</span>;
                     return <img src={src} alt={alt} {...props} referrerPolicy="no-referrer" />;
