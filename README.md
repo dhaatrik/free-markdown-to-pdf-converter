@@ -1,90 +1,114 @@
 # 📄 Markdown to PDF Converter
 
-A simple and elegant web application to convert your Markdown text into a downloadable, professionally styled PDF file. It features a live preview, syntax highlighting for code, and a range of customization options to make your documents look exactly the way you want.
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![React](https://img.shields.io/badge/React-19.2.0-blue.svg)](https://react.dev/)
+[![Vite](https://img.shields.io/badge/Vite-6.2.0-purple.svg)](https://vitejs.dev/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4.2.1-38B2AC.svg)](https://tailwindcss.com/)
 
-## ✨ Features
+> **Turn your notes into professional PDFs instantly.**
 
-- **✍️ Live Editor**: A clean, distraction-free editor with optional line numbers.
-- **👁️ Real-time Preview**: Instantly see how your Markdown will look as a formatted document.
-- **🎨 PDF Customization**: Easily change the font family, font size, text color, background color, and page margins for your PDF output.
-- **💻 Code Syntax Highlighting**: Code blocks are automatically highlighted for improved readability, powered by Prism.js.
-- **🔄 Undo/Redo Support**: Quickly undo and redo changes in the editor with buttons or keyboard shortcuts (Ctrl/Cmd + Z, Ctrl/Cmd + Y).
-- **🚀 Fast PDF Generation**: Converts your formatted content into a high-quality PDF in your browser using `jspdf` and `html2canvas`.
-- **📱 Responsive Design**: Works beautifully on desktops, tablets, and mobile devices.
-- **🆓 Completely Free**: No ads, no sign-ups. Use it online or run it on your own computer for free.
+Welcome to the **Markdown to PDF Converter**! This is a simple, free, and privacy-focused web tool that lets you write text using Markdown and convert it into a beautifully formatted PDF document. It runs entirely in your browser—no sign-ups, no installations, and no data uploads required.
 
-## 🛠️ Tech Stack
+## 📑 Table of Contents
+- [Features](#-features)
+- [Installation & Setup](#-installation--setup)
+- [Usage Examples](#-usage-examples)
+- [Contributing Guidelines](#-contributing-guidelines)
+- [License](#-license)
 
-This project is built with modern web technologies and does not require a complex backend or build process.
+## 🌟 Features
+- **✍️ Live Editor**: Write in a clean, distraction-free environment with line numbers.
+- **👁️ Real-time Preview**: See your document transform instantly as you type.
+- **🎨 Custom Styling**: Customize fonts, text size, colors, and page margins to fit your needs.
+- **💻 Syntax Highlighting**: Automatic coloring for code blocks (great for technical docs).
+- **🔒 Privacy First**: All processing happens in your browser. Your data never leaves your device.
+- **📱 Responsive Design & Dark Mode**: Works beautifully on desktops, tablets, and mobile phones, with a togglable dark/light theme.
 
-- **Frontend Framework**: [React](https://reactjs.org/)
-- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
-- **Markdown Parsing**: [Marked.js](https://marked.js.org/)
-- **PDF Generation**: [jsPDF](https://github.com/parallax/jsPDF) & [html2canvas](https://html2canvas.hertzen.com/)
-- **Syntax Highlighting**: [Prism.js](https://prismjs.com/) - For highlighting code blocks within the Markdown preview.
 
-## 📂 File Structure
+## 🚀 Installation & Setup
 
-The repository is structured to be clean and easy to navigate:
+This project is built using React, Vite, and Tailwind CSS. To run it locally on your machine, follow these steps:
 
-```
-.
-├── 📄 index.html        # The main HTML file that hosts the React app.
-├── 📁 src/
-│   ├── ⚛️ App.tsx         # The main React component containing all the UI and logic.
-│   └── 🎬 index.tsx        # The entry point for the React application.
-├── 📦 package.json        # Lists project dependencies and scripts.
-├── vite.config.ts     # Configuration file for Vite.
-└── README.md          # This file, providing an overview of the project.
-```
+### Prerequisites
+Make sure you have [Node.js](https://nodejs.org/) installed on your machine.
 
-## 🚀 How to Use (Online)
+### Steps
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/DhaatuTheGamer/free-markdown-to-pdf-converter.git
+   cd free-markdown-to-pdf-converter
+   ```
 
-Using the web app is straightforward:
+2. **Install dependencies:**
+   ```bash
+   npm install
+   ```
 
-1.  **Write Markdown**: Type or paste your Markdown text into the editor pane on the left.
-2.  **Preview**: See the formatted output appear instantly in the preview pane on the right.
-3.  **Customize (Optional)**: Click the **Settings** (⚙️) icon to adjust fonts, colors, and margins.
-4.  **Download**: Click the **Download PDF** button to generate and save your document.
+3. **Start the development server:**
+   ```bash
+   npm run dev
+   ```
 
-## 💻 How to Run Locally
+4. **Open in browser:**
+   Open your browser and navigate to the URL provided in the terminal (usually `http://localhost:5173`).
 
-To run this project on your local machine, you'll need to have [Node.js](https://nodejs.org/) and [npm](https://www.npmjs.com/) (which comes with Node.js) installed.
-
-### Step 1: Get the Code
-
-First, you need to get the project files onto your computer.
-
-**Option A: Download ZIP**
-1.  Go to the project's repository page (e.g., on GitHub).
-2.  Click the green `<> Code` button and select **Download ZIP**.
-3.  Unzip the downloaded file.
-
-**Option B: Clone with Git (Recommended)**
-If you have Git installed, open your terminal and run:
+### Building for Production
+To build the app for production, run:
 ```bash
-git clone <repository-url>
+npm run build
+```
+This will generate a `dist` folder containing the optimized production build.
+
+## 💡 Usage Examples
+
+### How to use the app
+1.  **Start Typing**: Use the editor pane on the left side of the screen.
+2.  **Format with Toolbar**: Use the rich-text toolbar to easily insert bold text, lists, code blocks, quotes, and more.
+3.  **Customize Appearance**: Click the **Settings (⚙️)** icon in the top right to adjust:
+    *   **Typography**: Choose between Serif, Sans-serif, or Monospace fonts.
+    *   **Colors**: Change text and background colors for your final document.
+    *   **Margins**: Adjust the white space around your text.
+    *   **Header/Footer**: Add custom header or footer text with dynamic page numbers.
+4.  **Download**: Once satisfied with the preview on the right, click the **Export PDF** button to generate and download your file.
+
+### Markdown Code Examples
+
+Here is a quick cheat sheet of Markdown you can try out in the editor:
+
+```markdown
+# Heading 1 (Big Title)
+## Heading 2 (Subtitle)
+
+**Bold Text** and *Italic Text*
+
+- Bullet list item 1
+- Bullet list item 2
+
+1. Numbered list item 1
+2. Numbered list item 2
+
+> This is a blockquote.
+
+```javascript
+// A code block with syntax highlighting
+function helloWorld() {
+  console.log("Hello, world!");
+}
 ```
 
-### Step 2: Install Dependencies
 
-Navigate into the project folder you just downloaded or cloned and install the necessary dependencies using npm:
+## 🤝 Contributing Guidelines
 
-```bash
-cd <project-folder>
-npm install
-```
+Contributions, issues, and feature requests are welcome! 
 
-### Step 3: Start the Development Server
+1. Fork the project.
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`).
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`).
+4. Push to the branch (`git push origin feature/AmazingFeature`).
+5. Open a Pull Request.
 
-Once the dependencies are installed, you can start the local development server:
+Please make sure to update tests as appropriate.
 
-```bash
-npm run dev
-```
+## 📄 License
 
-This command will start the Vite development server and provide you with a local URL (usually `http://localhost:5173`) that you can open in your web browser to see the application running. The server supports hot-reloading, so any changes you make to the code will be reflected in the browser instantly.
-
----
-
-Enjoy creating beautiful documents!
+This project is open source and available under the [MIT License](LICENSE).
