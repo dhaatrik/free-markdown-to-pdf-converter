@@ -41,6 +41,27 @@ describe('App', () => {
     vi.clearAllMocks();
   });
 
+  describe('Editor Actions', () => {
+    it('clears markdown and focuses editor when Clear All button is clicked', async () => {
+      render(<App />);
+      const user = userEvent.setup();
+      const editor = screen.getByPlaceholderText(/Start writing your markdown here.../i);
+      const clearBtn = screen.getByRole('button', { name: /Clear All/i });
+
+      // First, type something to ensure it's not empty
+      await user.clear(editor);
+      await user.type(editor, 'Hello World');
+      expect(editor).toHaveValue('Hello World');
+
+      // Click clear button
+      await user.click(clearBtn);
+
+      // Verify empty and focused
+      expect(editor).toHaveValue('');
+      expect(editor).toHaveFocus();
+    });
+  });
+
   describe('PDF Export', () => {
     it('handles download pdf when markdown is empty', async () => {
       // Because testing an unreachable branch (early return in handleDownloadPdf when the button is disabled)
