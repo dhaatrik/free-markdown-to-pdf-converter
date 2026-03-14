@@ -12,8 +12,6 @@ import {
 } from 'lucide-react';
 import { cn, safeProtocol } from './utils';
 
-const remarkPlugins = [remarkGfm];
-
 interface ToolbarButtonProps {
   onClick: () => void;
   title: string;
