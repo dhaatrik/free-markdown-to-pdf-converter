@@ -60,6 +60,44 @@ describe('App', () => {
       expect(editor).toHaveValue('');
       expect(editor).toHaveFocus();
     });
+
+    it('formats selected text when a formatting button is clicked', async () => {
+      render(<App />);
+      const user = userEvent.setup();
+      const editor = screen.getByPlaceholderText(/Start writing your markdown here.../i) as HTMLTextAreaElement;
+
+      // Clear the default text and type our own
+      const clearBtn = screen.getByRole('button', { name: /Clear All/i });
+      await user.click(clearBtn);
+
+      const testText = 'Hello World';
+      await user.type(editor, testText);
+      expect(editor).toHaveValue(testText);
+
+      // Select 'World' (indices 6 to 11)
+      editor.setSelectionRange(6, 11);
+
+      // Click the Bold button
+      const boldBtn = screen.getByRole('button', { name: /Bold/i });
+      await user.click(boldBtn);
+
+      // Verify the text was formatted correctly
+      expect(editor).toHaveValue('Hello **World**');
+
+      // The formatting function uses setTimeout to restore focus and selection
+      // Wait for it to finish and verify focus and selection
+      await act(async () => {
+        await new Promise(resolve => setTimeout(resolve, 0));
+      });
+
+      expect(editor).toHaveFocus();
+      // After formatting, the selection should include the formatted text and the markdown wrappers
+      // 'Hello **World**' -> start: 6 + 2 (for '**'), end: 11 + 2
+      // Actually insertText sets selection to start + before.length, end + before.length
+      // start was 6, before is '**' (length 2), so selection should be (8, 13)
+      expect(editor.selectionStart).toBe(8);
+      expect(editor.selectionEnd).toBe(13);
+    });
   });
 
   describe('PDF Export', () => {
