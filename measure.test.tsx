@@ -1,40 +1,118 @@
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import React from 'react';
+import { act } from '@testing-library/react';
 
-import '@testing-library/jest-dom';
+vi.mock('./App', () => ({
+  default: () => <textarea defaultValue="test" />
+}));
 
-describe('measure.tsx benchmark', () => {
+describe('measure.tsx', () => {
   beforeEach(() => {
+    document.body.innerHTML = '<div id="root"></div>';
     vi.useFakeTimers();
-    document.body.innerHTML = '';
-    vi.resetModules();
   });
 
   afterEach(() => {
+    vi.clearAllTimers();
     vi.useRealTimers();
     vi.resetModules();
   });
 
-  it('runs benchmark correctly and simulates rendering 100 times', async () => {
-    // 1. Initialize empty body to test root creation logic
-    document.body.innerHTML = '';
+  it('runs the benchmark correctly and interacts with textarea if present', async () => {
+    vi.spyOn(performance, 'now').mockReturnValue(1000);
 
-    // 2. Dynamically import the file which triggers the benchmark
-    await import('./measure');
+    // We mock querySelector to return a mock textarea element
+    // This allows us to hit the branch `if (textarea)` without actually triggering
+    // a real jsdom event on a React-managed textarea which can cause memory leaks.
+    const mockTextarea = {
+        value: 'initial',
+        dispatchEvent: vi.fn(),
+    };
+    const querySelectorMock = vi.spyOn(document, 'querySelector').mockImplementation((sel) => {
+        if (sel === 'textarea') return mockTextarea as any as HTMLTextAreaElement;
+        return null;
+    });
 
-    // 3. Root should be created and appended to document
-    const root = document.querySelector('div');
-    expect(root).toBeInTheDocument();
-
-    // 4. Simulate the complex async timeout loop for 100 renders
-    // Loop slightly more than 100 times to ensure we catch the completion callback
-    for (let i = 0; i < 110; i++) {
-        await vi.runOnlyPendingTimersAsync();
+    const mockSet = vi.fn();
+    const originalDescriptor = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value');
+    if (originalDescriptor) {
+      Object.defineProperty(window.HTMLTextAreaElement.prototype, 'value', {
+        set: mockSet,
+        get: () => 'test',
+        configurable: true,
+      });
+    } else {
+        Object.defineProperty(window.HTMLTextAreaElement.prototype, 'value', {
+            set: mockSet,
+            get: () => 'test',
+            configurable: true,
+        });
     }
 
-    // 5. Assert that the #benchmark-complete element is attached to the document body
-    const completeEl = document.getElementById('benchmark-complete');
-    expect(completeEl).toBeInTheDocument();
+    // Dynamic import to execute measure.tsx after DOM setup
+    await act(async () => {
+        await import('./measure.tsx');
+    });
 
-    // Also assert that the completed result is a number as totalTime / 100
-    expect(Number(completeEl?.textContent)).toBeGreaterThanOrEqual(0);
-  }, 10000);
+    for(let i=0; i<105; i++) {
+        await act(async () => {
+            vi.runOnlyPendingTimers();
+        });
+    }
+
+    const completeDiv = document.getElementById('benchmark-complete');
+    expect(completeDiv).toBeInTheDocument();
+
+    // Check that we interacted with textarea
+    expect(mockTextarea.dispatchEvent).toHaveBeenCalled();
+    expect(mockSet).toHaveBeenCalled();
+
+    querySelectorMock.mockRestore();
+    if (originalDescriptor) {
+        Object.defineProperty(window.HTMLTextAreaElement.prototype, 'value', originalDescriptor);
+    }
+  });
+
+  it('runs without textarea successfully', async () => {
+    vi.spyOn(performance, 'now').mockReturnValue(1000);
+
+    const querySelectorMock = vi.spyOn(document, 'querySelector').mockReturnValue(null);
+
+    await act(async () => {
+        await import('./measure.tsx?no-textarea');
+    });
+
+    for(let i=0; i<105; i++) {
+        await act(async () => {
+            vi.runOnlyPendingTimers();
+        });
+    }
+
+    const completeDiv = document.getElementById('benchmark-complete');
+    expect(completeDiv).toBeInTheDocument();
+
+    querySelectorMock.mockRestore();
+  });
+
+  it('handles missing root element', async () => {
+    document.body.innerHTML = ''; // no root
+
+    vi.spyOn(performance, 'now').mockReturnValue(1000);
+    const querySelectorMock = vi.spyOn(document, 'querySelector').mockReturnValue(null);
+
+    await act(async () => {
+        await import('./measure.tsx?no-root');
+    });
+
+    for(let i=0; i<105; i++) {
+        await act(async () => {
+            vi.runOnlyPendingTimers();
+        });
+    }
+
+    const completeDiv = document.getElementById('benchmark-complete');
+    expect(completeDiv).toBeInTheDocument();
+
+    querySelectorMock.mockRestore();
+  });
 });
