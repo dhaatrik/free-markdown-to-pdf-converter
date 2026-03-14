@@ -91,4 +91,71 @@ describe('App', () => {
       expect(jsPDFModule.jsPDF).not.toHaveBeenCalled();
     });
   });
+
+  describe('Undo/Redo History', () => {
+    it('handles undo and redo correctly', async () => {
+      vi.useFakeTimers();
+      render(<App />);
+
+      const editor = screen.getByPlaceholderText(/Start writing your markdown here.../i);
+      const undoBtn = screen.getByRole('button', { name: /Undo/i });
+      const redoBtn = screen.getByRole('button', { name: /Redo/i });
+      const clearBtn = screen.getByRole('button', { name: /Clear All/i });
+
+      // Clear the initial text (state 0)
+      fireEvent.click(clearBtn);
+
+      // Fast forward 500ms to allow debounce to register the clear
+      act(() => {
+        vi.advanceTimersByTime(500);
+      });
+
+      // Type first state
+      fireEvent.change(editor, { target: { value: 'State 1' } });
+
+      // Fast forward to save to history
+      act(() => {
+        vi.advanceTimersByTime(500);
+      });
+
+      expect(editor).toHaveValue('State 1');
+
+      // Type second state
+      fireEvent.change(editor, { target: { value: 'State 1 and State 2' } });
+
+      // Fast forward to save to history
+      act(() => {
+        vi.advanceTimersByTime(500);
+      });
+
+      expect(editor).toHaveValue('State 1 and State 2');
+
+      // Undo to State 1
+      fireEvent.click(undoBtn);
+      expect(editor).toHaveValue('State 1');
+
+      // Redo to State 2
+      fireEvent.click(redoBtn);
+      expect(editor).toHaveValue('State 1 and State 2');
+
+      // Undo twice
+      fireEvent.click(undoBtn);
+      fireEvent.click(undoBtn);
+
+      // The first history entry is DEFAULT_MARKDOWN, and the clear action created the second entry ('').
+      // We can undo once more to reach the initial DEFAULT_MARKDOWN state.
+      expect(undoBtn.hasAttribute('disabled')).toBe(false);
+      fireEvent.click(undoBtn);
+      expect(undoBtn.hasAttribute('disabled')).toBe(true);
+
+      // Redo 3 times to go back to State 2
+      fireEvent.click(redoBtn);
+      fireEvent.click(redoBtn);
+      fireEvent.click(redoBtn);
+      expect(editor).toHaveValue('State 1 and State 2');
+      expect(redoBtn.hasAttribute('disabled')).toBe(true);
+
+      vi.useRealTimers();
+    });
+  });
 });
