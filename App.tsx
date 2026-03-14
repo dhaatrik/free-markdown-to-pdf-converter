@@ -10,7 +10,7 @@ import {
   Bold, Italic, List, ListOrdered, Quote, Code, Link, Image as ImageIcon,
   Moon, Sun
 } from 'lucide-react';
-import { cn } from './utils';
+import { cn, safeProtocol } from './utils';
 
 const remarkPlugins = [remarkGfm];
 
@@ -598,11 +598,13 @@ const App: React.FC = () => {
                 remarkPlugins={[remarkGfm]}
                 components={{
                   a({ node, href, children, ...props }: any) {
-                    return <a href={href} target="_blank" rel="noopener noreferrer" {...props}>{children}</a>;
+                    const safeHref = safeProtocol(href) || '#';
+                    return <a href={safeHref} target="_blank" rel="noopener noreferrer" {...props}>{children}</a>;
                   },
                   img({ node, src, alt, ...props }: any) {
-                    if (!src) return <span className="text-neutral-400 italic border border-dashed border-neutral-300 px-2 py-1 rounded inline-block text-sm">[{alt || 'Image without URL'}]</span>;
-                    return <img src={src} alt={alt} {...props} referrerPolicy="no-referrer" />;
+                    const safeSrc = safeProtocol(src);
+                    if (!safeSrc) return <span className="text-neutral-400 italic border border-dashed border-neutral-300 px-2 py-1 rounded inline-block text-sm">[{alt || 'Image without URL'}]</span>;
+                    return <img src={safeSrc} alt={alt} {...props} referrerPolicy="no-referrer" />;
                   },
                   code({ node, inline, className, children, ...props }: any) {
                     const match = /language-(\w+)/.exec(className || '')
