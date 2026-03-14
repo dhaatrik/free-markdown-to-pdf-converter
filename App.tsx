@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import ReactMarkdown from 'react-markdown';
+import ReactMarkdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus, coy } from 'react-syntax-highlighter/dist/esm/styles/prism';
@@ -264,13 +264,23 @@ const App: React.FC = () => {
     return count + 1;
   }, [markdown]);
 
-  const memoizedComponents = React.useMemo(() => ({
-    ...SHARED_COMPONENTS,
-    code({ node, inline, className, children, ...props }: any) {
+  const markdownComponents: Components = React.useMemo(() => ({
+    a({ node, href, children, ...props }) {
+      const safeHref = safeProtocol(href) || '#';
+      return <a href={safeHref} target="_blank" rel="noopener noreferrer" {...props}>{children}</a>;
+    },
+    img({ node, src, alt, ...props }) {
+      const safeSrc = safeProtocol(src);
+      if (!safeSrc) return <span className="text-neutral-400 italic border border-dashed border-neutral-300 px-2 py-1 rounded inline-block text-sm">[{alt || 'Image without URL'}]</span>;
+      return <img src={safeSrc} alt={alt} {...props} referrerPolicy="no-referrer" />;
+    },
+    code({ node, className, children, ...props }) {
+      // @ts-ignore - inline is removed from types in react-markdown v9+ but might still be passed by older plugins or custom ASTs
+      const { inline, ref, ...rest } = props;
       const match = /language-(\w+)/.exec(className || '')
       return !inline && match ? (
         <SyntaxHighlighter
-          {...props}
+          {...rest}
           children={String(children).replace(/\\n$/, '')}
           style={theme === 'dark' ? vscDarkPlus : coy}
           language={match[1]}
@@ -282,7 +292,7 @@ const App: React.FC = () => {
           }}
         />
       ) : (
-        <code {...props} className={className}>
+        <code {...rest} className={className}>
           {children}
         </code>
       )
@@ -683,7 +693,7 @@ const App: React.FC = () => {
             >
               <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
-                components={memoizedComponents}
+                components={markdownComponents}
               >
                 {markdown}
               </ReactMarkdown>
