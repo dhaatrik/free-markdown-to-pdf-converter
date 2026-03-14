@@ -1,5 +1,5 @@
 
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import ReactMarkdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -13,6 +13,18 @@ import {
 import { cn, safeProtocol } from './utils';
 
 const remarkPlugins = [remarkGfm];
+
+const SHARED_COMPONENTS = {
+  a({ node, href, children, ...props }: any) {
+    const safeHref = safeProtocol(href) || '#';
+    return <a href={safeHref} target="_blank" rel="noopener noreferrer" {...props}>{children}</a>;
+  },
+  img({ node, src, alt, ...props }: any) {
+    const safeSrc = safeProtocol(src);
+    if (!safeSrc) return <span className="text-neutral-400 italic border border-dashed border-neutral-300 px-2 py-1 rounded inline-block text-sm">[{alt || 'Image without URL'}]</span>;
+    return <img src={safeSrc} alt={alt} {...props} referrerPolicy="no-referrer" />;
+  }
+};
 
 interface ToolbarButtonProps {
   onClick: () => void;
@@ -242,7 +254,7 @@ const App: React.FC = () => {
     }, 150);
   }, [markdown]);
 
-  const lineCount = React.useMemo(() => {
+  const lineCount = useMemo(() => {
     let count = 0;
     let pos = markdown.indexOf('\n');
     while (pos !== -1) {
