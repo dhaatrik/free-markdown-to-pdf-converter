@@ -1,7 +1,7 @@
 
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import ReactMarkdown from 'react-markdown';
+import ReactMarkdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus, coy } from 'react-syntax-highlighter/dist/esm/styles/prism';
@@ -13,6 +13,18 @@ import {
 import { cn, safeProtocol } from './utils';
 
 const remarkPlugins = [remarkGfm];
+
+const SHARED_COMPONENTS = {
+  a({ node, href, children, ...props }: any) {
+    const safeHref = safeProtocol(href) || '#';
+    return <a href={safeHref} target="_blank" rel="noopener noreferrer" {...props}>{children}</a>;
+  },
+  img({ node, src, alt, ...props }: any) {
+    const safeSrc = safeProtocol(src);
+    if (!safeSrc) return <span className="text-neutral-400 italic border border-dashed border-neutral-300 px-2 py-1 rounded inline-block text-sm">[{alt || 'Image without URL'}]</span>;
+    return <img src={safeSrc} alt={alt} {...props} referrerPolicy="no-referrer" />;
+  }
+};
 
 interface ToolbarButtonProps {
   onClick: () => void;
@@ -242,7 +254,7 @@ const App: React.FC = () => {
     }, 150);
   }, [markdown]);
 
-  const lineCount = React.useMemo(() => {
+  const lineCount = useMemo(() => {
     let count = 0;
     let pos = markdown.indexOf('\n');
     while (pos !== -1) {
@@ -251,6 +263,41 @@ const App: React.FC = () => {
     }
     return count + 1;
   }, [markdown]);
+
+  const markdownComponents: Components = React.useMemo(() => ({
+    a({ node, href, children, ...props }) {
+      const safeHref = safeProtocol(href) || '#';
+      return <a href={safeHref} target="_blank" rel="noopener noreferrer" {...props}>{children}</a>;
+    },
+    img({ node, src, alt, ...props }) {
+      const safeSrc = safeProtocol(src);
+      if (!safeSrc) return <span className="text-neutral-400 italic border border-dashed border-neutral-300 px-2 py-1 rounded inline-block text-sm">[{alt || 'Image without URL'}]</span>;
+      return <img src={safeSrc} alt={alt} {...props} referrerPolicy="no-referrer" />;
+    },
+    code({ node, className, children, ...props }) {
+      // @ts-ignore - inline is removed from types in react-markdown v9+ but might still be passed by older plugins or custom ASTs
+      const { inline, ref, ...rest } = props;
+      const match = /language-(\w+)/.exec(className || '')
+      return !inline && match ? (
+        <SyntaxHighlighter
+          {...rest}
+          children={String(children).replace(/\\n$/, '')}
+          style={theme === 'dark' ? vscDarkPlus : coy}
+          language={match[1]}
+          PreTag="div"
+          customStyle={{
+            margin: 0,
+            borderRadius: '0.375rem',
+            fontSize: '0.85em',
+          }}
+        />
+      ) : (
+        <code {...rest} className={className}>
+          {children}
+        </code>
+      )
+    }
+  }), [theme]);
 
   return (
     <div className={cn(
@@ -646,38 +693,7 @@ const App: React.FC = () => {
             >
               <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
-                components={{
-                  a({ node, href, children, ...props }: any) {
-                    const safeHref = safeProtocol(href) || '#';
-                    return <a href={safeHref} target="_blank" rel="noopener noreferrer" {...props}>{children}</a>;
-                  },
-                  img({ node, src, alt, ...props }: any) {
-                    const safeSrc = safeProtocol(src);
-                    if (!safeSrc) return <span className="text-neutral-400 italic border border-dashed border-neutral-300 px-2 py-1 rounded inline-block text-sm">[{alt || 'Image without URL'}]</span>;
-                    return <img src={safeSrc} alt={alt} {...props} referrerPolicy="no-referrer" />;
-                  },
-                  code({ node, inline, className, children, ...props }: any) {
-                    const match = /language-(\w+)/.exec(className || '')
-                    return !inline && match ? (
-                      <SyntaxHighlighter
-                        {...props}
-                        children={String(children).replace(/\\n$/, '')}
-                        style={theme === 'dark' ? vscDarkPlus : coy}
-                        language={match[1]}
-                        PreTag="div"
-                        customStyle={{
-                          margin: 0,
-                          borderRadius: '0.375rem',
-                          fontSize: '0.85em',
-                        }}
-                      />
-                    ) : (
-                      <code {...props} className={className}>
-                        {children}
-                      </code>
-                    )
-                  }
-                }}
+                components={markdownComponents}
               >
                 {markdown}
               </ReactMarkdown>
