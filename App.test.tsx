@@ -42,6 +42,24 @@ describe('App', () => {
   });
 
   describe('Editor Actions', () => {
+    it('updates markdown when user types in the editor', async () => {
+      render(<App />);
+      const user = userEvent.setup();
+
+      const editor = screen.getByPlaceholderText(/Start writing your markdown here.../i);
+
+      // Clear initial content
+      await user.clear(editor);
+      expect(editor).toHaveValue('');
+
+      // Type new content
+      await user.type(editor, '# Testing handleMarkdownChange');
+      expect(editor).toHaveValue('# Testing handleMarkdownChange');
+
+      // Check if the preview updates (to verify the state change propagated)
+      expect(screen.getByText('Testing handleMarkdownChange')).toBeInTheDocument();
+    });
+
     it('clears markdown and focuses editor when Clear All button is clicked', async () => {
       render(<App />);
       const user = userEvent.setup();
