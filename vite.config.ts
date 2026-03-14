@@ -28,7 +28,7 @@ export default defineConfig(({ mode }) => {
         globals: true,
         environment: 'happy-dom',
         setupFiles: './setupTests.ts',
-        css: true,
+        css: false,
       }
     };
 });
