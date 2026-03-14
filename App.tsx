@@ -1,5 +1,5 @@
 
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -242,7 +242,7 @@ const App: React.FC = () => {
     }, 150);
   }, [markdown]);
 
-  const lineCount = React.useMemo(() => {
+  const lineCount = useMemo(() => {
     let count = 0;
     let pos = markdown.indexOf('\n');
     while (pos !== -1) {
