@@ -14,6 +14,56 @@ import { cn, safeProtocol } from './utils';
 
 const remarkPlugins = [remarkGfm];
 
+interface ToolbarButtonProps {
+  onClick: () => void;
+  title: string;
+  children: React.ReactNode;
+  disabled?: boolean;
+  variant?: 'default' | 'danger';
+  uiTheme: 'light' | 'dark';
+}
+
+const ToolbarButton: React.FC<ToolbarButtonProps> = ({
+  onClick,
+  title,
+  children,
+  disabled = false,
+  variant = 'default',
+  uiTheme
+}) => {
+  const baseClasses = "p-1.5 rounded transition-colors disabled:opacity-30 disabled:hover:bg-transparent";
+
+  const themeClasses = variant === 'danger'
+    ? (uiTheme === 'dark'
+      ? "text-red-400 hover:text-red-300 hover:bg-red-900/30"
+      : "text-red-500 hover:text-red-700 hover:bg-red-50")
+    : (uiTheme === 'dark'
+      ? "text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800"
+      : "text-neutral-500 hover:text-neutral-800 hover:bg-neutral-200");
+
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className={cn(baseClasses, themeClasses)}
+      title={title}
+    >
+      {children}
+    </button>
+  );
+};
+
+interface ToolbarSeparatorProps {
+  uiTheme: 'light' | 'dark';
+}
+
+const ToolbarSeparator: React.FC<ToolbarSeparatorProps> = ({ uiTheme }) => (
+  <div className={cn(
+    "w-px h-4 mx-1",
+    uiTheme === 'dark' ? "bg-neutral-700" : "bg-neutral-300"
+  )} />
+);
+
 const DEFAULT_MARKDOWN = `
 # Markdown to PDF Converter
 
@@ -513,23 +563,23 @@ const App: React.FC = () => {
             uiTheme === 'dark' ? "border-neutral-800 bg-neutral-900/50" : "border-neutral-100 bg-neutral-50/50"
           )}>
             <div className="flex items-center gap-1 shrink-0">
-              <button onClick={() => insertText('**', '**')} className={cn("p-1.5 rounded transition-colors", uiTheme === 'dark' ? "text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800" : "text-neutral-500 hover:text-neutral-800 hover:bg-neutral-200")} title="Bold"><Bold className="w-4 h-4" /></button>
-              <button onClick={() => insertText('*', '*')} className={cn("p-1.5 rounded transition-colors", uiTheme === 'dark' ? "text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800" : "text-neutral-500 hover:text-neutral-800 hover:bg-neutral-200")} title="Italic"><Italic className="w-4 h-4" /></button>
-              <div className={cn("w-px h-4 mx-1", uiTheme === 'dark' ? "bg-neutral-700" : "bg-neutral-300")}></div>
-              <button onClick={() => insertText('- ')} className={cn("p-1.5 rounded transition-colors", uiTheme === 'dark' ? "text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800" : "text-neutral-500 hover:text-neutral-800 hover:bg-neutral-200")} title="Bullet List"><List className="w-4 h-4" /></button>
-              <button onClick={() => insertText('1. ')} className={cn("p-1.5 rounded transition-colors", uiTheme === 'dark' ? "text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800" : "text-neutral-500 hover:text-neutral-800 hover:bg-neutral-200")} title="Numbered List"><ListOrdered className="w-4 h-4" /></button>
-              <div className={cn("w-px h-4 mx-1", uiTheme === 'dark' ? "bg-neutral-700" : "bg-neutral-300")}></div>
-              <button onClick={() => insertText('> ')} className={cn("p-1.5 rounded transition-colors", uiTheme === 'dark' ? "text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800" : "text-neutral-500 hover:text-neutral-800 hover:bg-neutral-200")} title="Quote"><Quote className="w-4 h-4" /></button>
-              <button onClick={() => insertText('\`\`\`\n', '\n\`\`\`')} className={cn("p-1.5 rounded transition-colors", uiTheme === 'dark' ? "text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800" : "text-neutral-500 hover:text-neutral-800 hover:bg-neutral-200")} title="Code Block"><Code className="w-4 h-4" /></button>
-              <div className={cn("w-px h-4 mx-1", uiTheme === 'dark' ? "bg-neutral-700" : "bg-neutral-300")}></div>
-              <button onClick={() => insertText('[', '](url)')} className={cn("p-1.5 rounded transition-colors", uiTheme === 'dark' ? "text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800" : "text-neutral-500 hover:text-neutral-800 hover:bg-neutral-200")} title="Link"><Link className="w-4 h-4" /></button>
-              <button onClick={() => insertText('![alt text](', ')')} className={cn("p-1.5 rounded transition-colors", uiTheme === 'dark' ? "text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800" : "text-neutral-500 hover:text-neutral-800 hover:bg-neutral-200")} title="Image"><ImageIcon className="w-4 h-4" /></button>
+              <ToolbarButton onClick={() => insertText('**', '**')} title="Bold" uiTheme={uiTheme}><Bold className="w-4 h-4" /></ToolbarButton>
+              <ToolbarButton onClick={() => insertText('*', '*')} title="Italic" uiTheme={uiTheme}><Italic className="w-4 h-4" /></ToolbarButton>
+              <ToolbarSeparator uiTheme={uiTheme} />
+              <ToolbarButton onClick={() => insertText('- ')} title="Bullet List" uiTheme={uiTheme}><List className="w-4 h-4" /></ToolbarButton>
+              <ToolbarButton onClick={() => insertText('1. ')} title="Numbered List" uiTheme={uiTheme}><ListOrdered className="w-4 h-4" /></ToolbarButton>
+              <ToolbarSeparator uiTheme={uiTheme} />
+              <ToolbarButton onClick={() => insertText('> ')} title="Quote" uiTheme={uiTheme}><Quote className="w-4 h-4" /></ToolbarButton>
+              <ToolbarButton onClick={() => insertText('\`\`\`\n', '\n\`\`\`')} title="Code Block" uiTheme={uiTheme}><Code className="w-4 h-4" /></ToolbarButton>
+              <ToolbarSeparator uiTheme={uiTheme} />
+              <ToolbarButton onClick={() => insertText('[', '](url)')} title="Link" uiTheme={uiTheme}><Link className="w-4 h-4" /></ToolbarButton>
+              <ToolbarButton onClick={() => insertText('![alt text](', ')')} title="Image" uiTheme={uiTheme}><ImageIcon className="w-4 h-4" /></ToolbarButton>
             </div>
             <div className="flex items-center gap-1 shrink-0 ml-4">
-              <button onClick={handleUndo} disabled={historyIndex <= 0} className={cn("p-1.5 rounded transition-colors disabled:opacity-30 disabled:hover:bg-transparent", uiTheme === 'dark' ? "text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800" : "text-neutral-500 hover:text-neutral-800 hover:bg-neutral-200")} title="Undo"><Undo className="w-4 h-4" /></button>
-              <button onClick={handleRedo} disabled={historyIndex >= history.length - 1} className={cn("p-1.5 rounded transition-colors disabled:opacity-30 disabled:hover:bg-transparent", uiTheme === 'dark' ? "text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800" : "text-neutral-500 hover:text-neutral-800 hover:bg-neutral-200")} title="Redo"><Redo className="w-4 h-4" /></button>
-              <div className={cn("w-px h-4 mx-1", uiTheme === 'dark' ? "bg-neutral-700" : "bg-neutral-300")}></div>
-              <button onClick={handleClear} className={cn("p-1.5 rounded transition-colors", uiTheme === 'dark' ? "text-red-400 hover:text-red-300 hover:bg-red-900/30" : "text-red-500 hover:text-red-700 hover:bg-red-50")} title="Clear All"><Trash2 className="w-4 h-4" /></button>
+              <ToolbarButton onClick={handleUndo} disabled={historyIndex <= 0} title="Undo" uiTheme={uiTheme}><Undo className="w-4 h-4" /></ToolbarButton>
+              <ToolbarButton onClick={handleRedo} disabled={historyIndex >= history.length - 1} title="Redo" uiTheme={uiTheme}><Redo className="w-4 h-4" /></ToolbarButton>
+              <ToolbarSeparator uiTheme={uiTheme} />
+              <ToolbarButton onClick={handleClear} variant="danger" title="Clear All" uiTheme={uiTheme}><Trash2 className="w-4 h-4" /></ToolbarButton>
             </div>
           </div>
 
