@@ -1,7 +1,7 @@
 
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import ReactMarkdown from 'react-markdown';
+import ReactMarkdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus, coy } from 'react-syntax-highlighter/dist/esm/styles/prism';
@@ -10,9 +10,71 @@ import {
   Bold, Italic, List, ListOrdered, Quote, Code, Link, Image as ImageIcon,
   Moon, Sun
 } from 'lucide-react';
-import { cn } from './utils';
+import { cn, safeProtocol } from './utils';
 
 const remarkPlugins = [remarkGfm];
+
+const SHARED_COMPONENTS = {
+  a({ node, href, children, ...props }: any) {
+    const safeHref = safeProtocol(href) || '#';
+    return <a href={safeHref} target="_blank" rel="noopener noreferrer" {...props}>{children}</a>;
+  },
+  img({ node, src, alt, ...props }: any) {
+    const safeSrc = safeProtocol(src);
+    if (!safeSrc) return <span className="text-neutral-400 italic border border-dashed border-neutral-300 px-2 py-1 rounded inline-block text-sm">[{alt || 'Image without URL'}]</span>;
+    return <img src={safeSrc} alt={alt} {...props} referrerPolicy="no-referrer" />;
+  }
+};
+
+interface ToolbarButtonProps {
+  onClick: () => void;
+  title: string;
+  children: React.ReactNode;
+  disabled?: boolean;
+  variant?: 'default' | 'danger';
+  uiTheme: 'light' | 'dark';
+}
+
+const ToolbarButton: React.FC<ToolbarButtonProps> = ({
+  onClick,
+  title,
+  children,
+  disabled = false,
+  variant = 'default',
+  uiTheme
+}) => {
+  const baseClasses = "p-1.5 rounded transition-colors disabled:opacity-30 disabled:hover:bg-transparent";
+
+  const themeClasses = variant === 'danger'
+    ? (uiTheme === 'dark'
+      ? "text-red-400 hover:text-red-300 hover:bg-red-900/30"
+      : "text-red-500 hover:text-red-700 hover:bg-red-50")
+    : (uiTheme === 'dark'
+      ? "text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800"
+      : "text-neutral-500 hover:text-neutral-800 hover:bg-neutral-200");
+
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className={cn(baseClasses, themeClasses)}
+      title={title}
+    >
+      {children}
+    </button>
+  );
+};
+
+interface ToolbarSeparatorProps {
+  uiTheme: 'light' | 'dark';
+}
+
+const ToolbarSeparator: React.FC<ToolbarSeparatorProps> = ({ uiTheme }) => (
+  <div className={cn(
+    "w-px h-4 mx-1",
+    uiTheme === 'dark' ? "bg-neutral-700" : "bg-neutral-300"
+  )} />
+);
 
 const DEFAULT_MARKDOWN = `
 # Markdown to PDF Converter
@@ -192,7 +254,7 @@ const App: React.FC = () => {
     }, 150);
   }, [markdown]);
 
-  const lineCount = React.useMemo(() => {
+  const lineCount = useMemo(() => {
     let count = 0;
     let pos = markdown.indexOf('\n');
     while (pos !== -1) {
@@ -201,6 +263,41 @@ const App: React.FC = () => {
     }
     return count + 1;
   }, [markdown]);
+
+  const markdownComponents: Components = React.useMemo(() => ({
+    a({ node, href, children, ...props }) {
+      const safeHref = safeProtocol(href) || '#';
+      return <a href={safeHref} target="_blank" rel="noopener noreferrer" {...props}>{children}</a>;
+    },
+    img({ node, src, alt, ...props }) {
+      const safeSrc = safeProtocol(src);
+      if (!safeSrc) return <span className="text-neutral-400 italic border border-dashed border-neutral-300 px-2 py-1 rounded inline-block text-sm">[{alt || 'Image without URL'}]</span>;
+      return <img src={safeSrc} alt={alt} {...props} referrerPolicy="no-referrer" />;
+    },
+    code({ node, className, children, ...props }) {
+      // @ts-ignore - inline is removed from types in react-markdown v9+ but might still be passed by older plugins or custom ASTs
+      const { inline, ref, ...rest } = props;
+      const match = /language-(\w+)/.exec(className || '')
+      return !inline && match ? (
+        <SyntaxHighlighter
+          {...rest}
+          children={String(children).replace(/\\n$/, '')}
+          style={theme === 'dark' ? vscDarkPlus : coy}
+          language={match[1]}
+          PreTag="div"
+          customStyle={{
+            margin: 0,
+            borderRadius: '0.375rem',
+            fontSize: '0.85em',
+          }}
+        />
+      ) : (
+        <code {...rest} className={className}>
+          {children}
+        </code>
+      )
+    }
+  }), [theme]);
 
   return (
     <div className={cn(
@@ -513,23 +610,23 @@ const App: React.FC = () => {
             uiTheme === 'dark' ? "border-neutral-800 bg-neutral-900/50" : "border-neutral-100 bg-neutral-50/50"
           )}>
             <div className="flex items-center gap-1 shrink-0">
-              <button onClick={() => insertText('**', '**')} className={cn("p-1.5 rounded transition-colors", uiTheme === 'dark' ? "text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800" : "text-neutral-500 hover:text-neutral-800 hover:bg-neutral-200")} title="Bold"><Bold className="w-4 h-4" /></button>
-              <button onClick={() => insertText('*', '*')} className={cn("p-1.5 rounded transition-colors", uiTheme === 'dark' ? "text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800" : "text-neutral-500 hover:text-neutral-800 hover:bg-neutral-200")} title="Italic"><Italic className="w-4 h-4" /></button>
-              <div className={cn("w-px h-4 mx-1", uiTheme === 'dark' ? "bg-neutral-700" : "bg-neutral-300")}></div>
-              <button onClick={() => insertText('- ')} className={cn("p-1.5 rounded transition-colors", uiTheme === 'dark' ? "text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800" : "text-neutral-500 hover:text-neutral-800 hover:bg-neutral-200")} title="Bullet List"><List className="w-4 h-4" /></button>
-              <button onClick={() => insertText('1. ')} className={cn("p-1.5 rounded transition-colors", uiTheme === 'dark' ? "text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800" : "text-neutral-500 hover:text-neutral-800 hover:bg-neutral-200")} title="Numbered List"><ListOrdered className="w-4 h-4" /></button>
-              <div className={cn("w-px h-4 mx-1", uiTheme === 'dark' ? "bg-neutral-700" : "bg-neutral-300")}></div>
-              <button onClick={() => insertText('> ')} className={cn("p-1.5 rounded transition-colors", uiTheme === 'dark' ? "text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800" : "text-neutral-500 hover:text-neutral-800 hover:bg-neutral-200")} title="Quote"><Quote className="w-4 h-4" /></button>
-              <button onClick={() => insertText('\`\`\`\n', '\n\`\`\`')} className={cn("p-1.5 rounded transition-colors", uiTheme === 'dark' ? "text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800" : "text-neutral-500 hover:text-neutral-800 hover:bg-neutral-200")} title="Code Block"><Code className="w-4 h-4" /></button>
-              <div className={cn("w-px h-4 mx-1", uiTheme === 'dark' ? "bg-neutral-700" : "bg-neutral-300")}></div>
-              <button onClick={() => insertText('[', '](url)')} className={cn("p-1.5 rounded transition-colors", uiTheme === 'dark' ? "text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800" : "text-neutral-500 hover:text-neutral-800 hover:bg-neutral-200")} title="Link"><Link className="w-4 h-4" /></button>
-              <button onClick={() => insertText('![alt text](', ')')} className={cn("p-1.5 rounded transition-colors", uiTheme === 'dark' ? "text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800" : "text-neutral-500 hover:text-neutral-800 hover:bg-neutral-200")} title="Image"><ImageIcon className="w-4 h-4" /></button>
+              <ToolbarButton onClick={() => insertText('**', '**')} title="Bold" uiTheme={uiTheme}><Bold className="w-4 h-4" /></ToolbarButton>
+              <ToolbarButton onClick={() => insertText('*', '*')} title="Italic" uiTheme={uiTheme}><Italic className="w-4 h-4" /></ToolbarButton>
+              <ToolbarSeparator uiTheme={uiTheme} />
+              <ToolbarButton onClick={() => insertText('- ')} title="Bullet List" uiTheme={uiTheme}><List className="w-4 h-4" /></ToolbarButton>
+              <ToolbarButton onClick={() => insertText('1. ')} title="Numbered List" uiTheme={uiTheme}><ListOrdered className="w-4 h-4" /></ToolbarButton>
+              <ToolbarSeparator uiTheme={uiTheme} />
+              <ToolbarButton onClick={() => insertText('> ')} title="Quote" uiTheme={uiTheme}><Quote className="w-4 h-4" /></ToolbarButton>
+              <ToolbarButton onClick={() => insertText('\`\`\`\n', '\n\`\`\`')} title="Code Block" uiTheme={uiTheme}><Code className="w-4 h-4" /></ToolbarButton>
+              <ToolbarSeparator uiTheme={uiTheme} />
+              <ToolbarButton onClick={() => insertText('[', '](url)')} title="Link" uiTheme={uiTheme}><Link className="w-4 h-4" /></ToolbarButton>
+              <ToolbarButton onClick={() => insertText('![alt text](', ')')} title="Image" uiTheme={uiTheme}><ImageIcon className="w-4 h-4" /></ToolbarButton>
             </div>
             <div className="flex items-center gap-1 shrink-0 ml-4">
-              <button onClick={handleUndo} disabled={historyIndex <= 0} className={cn("p-1.5 rounded transition-colors disabled:opacity-30 disabled:hover:bg-transparent", uiTheme === 'dark' ? "text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800" : "text-neutral-500 hover:text-neutral-800 hover:bg-neutral-200")} title="Undo"><Undo className="w-4 h-4" /></button>
-              <button onClick={handleRedo} disabled={historyIndex >= history.length - 1} className={cn("p-1.5 rounded transition-colors disabled:opacity-30 disabled:hover:bg-transparent", uiTheme === 'dark' ? "text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800" : "text-neutral-500 hover:text-neutral-800 hover:bg-neutral-200")} title="Redo"><Redo className="w-4 h-4" /></button>
-              <div className={cn("w-px h-4 mx-1", uiTheme === 'dark' ? "bg-neutral-700" : "bg-neutral-300")}></div>
-              <button onClick={handleClear} className={cn("p-1.5 rounded transition-colors", uiTheme === 'dark' ? "text-red-400 hover:text-red-300 hover:bg-red-900/30" : "text-red-500 hover:text-red-700 hover:bg-red-50")} title="Clear All"><Trash2 className="w-4 h-4" /></button>
+              <ToolbarButton onClick={handleUndo} disabled={historyIndex <= 0} title="Undo" uiTheme={uiTheme}><Undo className="w-4 h-4" /></ToolbarButton>
+              <ToolbarButton onClick={handleRedo} disabled={historyIndex >= history.length - 1} title="Redo" uiTheme={uiTheme}><Redo className="w-4 h-4" /></ToolbarButton>
+              <ToolbarSeparator uiTheme={uiTheme} />
+              <ToolbarButton onClick={handleClear} variant="danger" title="Clear All" uiTheme={uiTheme}><Trash2 className="w-4 h-4" /></ToolbarButton>
             </div>
           </div>
 
@@ -596,36 +693,7 @@ const App: React.FC = () => {
             >
               <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
-                components={{
-                  a({ node, href, children, ...props }: any) {
-                    return <a href={href} target="_blank" rel="noopener noreferrer" {...props}>{children}</a>;
-                  },
-                  img({ node, src, alt, ...props }: any) {
-                    if (!src) return <span className="text-neutral-400 italic border border-dashed border-neutral-300 px-2 py-1 rounded inline-block text-sm">[{alt || 'Image without URL'}]</span>;
-                    return <img src={src} alt={alt} {...props} referrerPolicy="no-referrer" />;
-                  },
-                  code({ node, inline, className, children, ...props }: any) {
-                    const match = /language-(\w+)/.exec(className || '')
-                    return !inline && match ? (
-                      <SyntaxHighlighter
-                        {...props}
-                        children={String(children).replace(/\\n$/, '')}
-                        style={theme === 'dark' ? vscDarkPlus : coy}
-                        language={match[1]}
-                        PreTag="div"
-                        customStyle={{
-                          margin: 0,
-                          borderRadius: '0.375rem',
-                          fontSize: '0.85em',
-                        }}
-                      />
-                    ) : (
-                      <code {...props} className={className}>
-                        {children}
-                      </code>
-                    )
-                  }
-                }}
+                components={markdownComponents}
               >
                 {markdown}
               </ReactMarkdown>
