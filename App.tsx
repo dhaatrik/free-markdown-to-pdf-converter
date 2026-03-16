@@ -275,8 +275,7 @@ const App: React.FC = () => {
       return <img src={safeSrc} alt={alt} {...props} referrerPolicy="no-referrer" />;
     },
     code({ node, className, children, ...props }) {
-      // @ts-ignore - inline is removed from types in react-markdown v9+ but might still be passed by older plugins or custom ASTs
-      const { inline, ref, ...rest } = props;
+      const { inline, ref, ...rest } = props as { inline?: boolean; ref?: React.Ref<HTMLElement> };
       const match = /language-(\w+)/.exec(className || '')
       return !inline && match ? (
         <SyntaxHighlighter
