@@ -1,5 +1,5 @@
 import { expect, test, describe } from "vitest";
-import { cn, safeProtocol } from "./utils";
+import { cn, safeProtocol } from "../utils";
 
 describe("cn utility function", () => {
   test("joins classes", () => {
@@ -7,6 +7,7 @@ describe("cn utility function", () => {
   });
 
   test("handles conditional classes", () => {
+    // eslint-disable-next-line no-constant-binary-expression
     expect(cn("base", true && "is-true", false && "is-false")).toBe("base is-true");
   });
 

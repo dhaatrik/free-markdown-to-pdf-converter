@@ -6,25 +6,12 @@ import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus, coy } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import {
-  Settings, Undo, Redo, Download, FileText, Trash2,
+  Settings, Undo, Redo, Download, Trash2,
   Bold, Italic, List, ListOrdered, Quote, Code, Link, Image as ImageIcon,
   Moon, Sun
 } from 'lucide-react';
 import { cn, safeProtocol } from './utils';
 
-const remarkPlugins = [remarkGfm];
-
-const SHARED_COMPONENTS = {
-  a({ node, href, children, ...props }: any) {
-    const safeHref = safeProtocol(href) || '#';
-    return <a href={safeHref} target="_blank" rel="noopener noreferrer" {...props}>{children}</a>;
-  },
-  img({ node, src, alt, ...props }: any) {
-    const safeSrc = safeProtocol(src);
-    if (!safeSrc) return <span className="text-neutral-400 italic border border-dashed border-neutral-300 px-2 py-1 rounded inline-block text-sm">[{alt || 'Image without URL'}]</span>;
-    return <img src={safeSrc} alt={alt} {...props} referrerPolicy="no-referrer" />;
-  }
-};
 
 interface ToolbarButtonProps {
   onClick: () => void;
@@ -77,9 +64,9 @@ const ToolbarSeparator: React.FC<ToolbarSeparatorProps> = ({ uiTheme }) => (
 );
 
 const DEFAULT_MARKDOWN = `
-# Markdown to PDF Converter
+# MarkPDF
 
-This is a modern, beautifully crafted Markdown to PDF converter. Write your Markdown on the left, and see the live preview on the right.
+This is a modern, beautifully crafted MarkPDF converter. Write your Markdown on the left, and see the live preview on the right.
 
 ## Features
 
@@ -265,16 +252,17 @@ const App: React.FC = () => {
   }, [markdown]);
 
   const markdownComponents: Components = React.useMemo(() => ({
-    a({ node, href, children, ...props }) {
+    a({ href, children, ...props }) {
       const safeHref = safeProtocol(href) || '#';
       return <a href={safeHref} target="_blank" rel="noopener noreferrer" {...props}>{children}</a>;
     },
-    img({ node, src, alt, ...props }) {
+    img({ src, alt, ...props }) {
       const safeSrc = safeProtocol(src);
       if (!safeSrc) return <span className="text-neutral-400 italic border border-dashed border-neutral-300 px-2 py-1 rounded inline-block text-sm">[{alt || 'Image without URL'}]</span>;
       return <img src={safeSrc} alt={alt} {...props} referrerPolicy="no-referrer" />;
     },
-    code({ node, className, children, ...props }) {
+    code({ className, children, ...props }) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { inline, ref, ...rest } = props as { inline?: boolean; ref?: React.Ref<HTMLElement> };
       const match = /language-(\w+)/.exec(className || '')
       return !inline && match ? (
@@ -339,9 +327,11 @@ const App: React.FC = () => {
         uiTheme === 'dark' ? "bg-neutral-900 border-neutral-800" : "bg-white border-neutral-200"
       )}>
         <div className="flex items-center gap-3">
-          <div className="bg-indigo-600 p-2 rounded-lg text-white">
-            <FileText className="w-5 h-5" />
-          </div>
+          <img 
+            src="/logo.png" 
+            alt="MarkPDF Logo" 
+            className="w-10 h-10 object-cover rounded-lg shadow-sm" 
+          />
           <h1 className={cn(
             "text-lg font-semibold hidden sm:block",
             uiTheme === 'dark' ? "text-neutral-100" : "text-neutral-800"
@@ -616,7 +606,7 @@ const App: React.FC = () => {
               <ToolbarButton onClick={() => insertText('1. ')} title="Numbered List" uiTheme={uiTheme}><ListOrdered className="w-4 h-4" /></ToolbarButton>
               <ToolbarSeparator uiTheme={uiTheme} />
               <ToolbarButton onClick={() => insertText('> ')} title="Quote" uiTheme={uiTheme}><Quote className="w-4 h-4" /></ToolbarButton>
-              <ToolbarButton onClick={() => insertText('\`\`\`\n', '\n\`\`\`')} title="Code Block" uiTheme={uiTheme}><Code className="w-4 h-4" /></ToolbarButton>
+              <ToolbarButton onClick={() => insertText('```\n', '\n```')} title="Code Block" uiTheme={uiTheme}><Code className="w-4 h-4" /></ToolbarButton>
               <ToolbarSeparator uiTheme={uiTheme} />
               <ToolbarButton onClick={() => insertText('[', '](url)')} title="Link" uiTheme={uiTheme}><Link className="w-4 h-4" /></ToolbarButton>
               <ToolbarButton onClick={() => insertText('![alt text](', ')')} title="Image" uiTheme={uiTheme}><ImageIcon className="w-4 h-4" /></ToolbarButton>

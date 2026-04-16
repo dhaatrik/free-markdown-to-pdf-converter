@@ -1,6 +1,6 @@
-# Contributing to Markdown to PDF Converter
+# Contributing to MarkPDF
 
-First off, thank you for considering contributing to the Markdown to PDF Converter! Contributions, issues, and feature requests are always welcome.
+First off, thank you for considering contributing to MarkPDF! Contributions, issues, and feature requests are always welcome.
 
 ## Tech Stack
 Before you start, it's helpful to know the technologies we use in this project:
@@ -17,7 +17,7 @@ To get the project running locally on your machine, follow these steps:
 2. **Fork and Clone**:
    Fork the project to your own GitHub account, then clone it locally:
    ```bash
-   git clone https://github.com/DhaatuTheGamer/free-markdown-to-pdf-converter.git
+   git clone https://github.com/dhaatrik/free-markdown-to-pdf-converter.git
    cd free-markdown-to-pdf-converter
    ```
 
