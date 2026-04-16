@@ -4,7 +4,7 @@
 - [x] Task: Analyze current state management for content and settings in `App.tsx` (140eceb)
 - [x] Task: Define the data structures for saving content and settings (140eceb)
 
-## Phase 2: Implementation
+## Phase 2: Implementation [checkpoint: c85beec]
 - [x] Task: Implement auto-save for Markdown content (db8d4bf)
     - [x] Add `useEffect` hook to watch `markdown` state and save to `localStorage`
     - [x] Update initialization logic to load content from `localStorage` if available
@@ -16,4 +16,4 @@
 ## Phase 3: Verification & Cleanup
 - [x] Task: Verify persistence by refreshing the page after making changes (6bd5421)
 - [x] Task: Verify that settings are persisted correctly (6bd5421)
-- [x] Task: Conductor - User Manual Verification 'Phase 2: Implementation' (Protocol in workflow.md) (checkpoint: )
+- [x] Task: Conductor - User Manual Verification 'Phase 2: Implementation' (Protocol in workflow.md) (checkpoint: c85beec)
