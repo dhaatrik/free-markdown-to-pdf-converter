@@ -14,7 +14,7 @@ vi.mock('react-dom/client', () => ({
 }));
 
 // Mock the App component
-vi.mock('./App', () => ({
+vi.mock('../App', () => ({
   default: () => <div data-testid="mock-app" />
 }));
 
@@ -41,7 +41,7 @@ describe('index.tsx', () => {
   it('throws an error if root element is not found', async () => {
     // document.body is empty, so getElementById('root') will return null
     await expect(async () => {
-      await import('./index.tsx');
+      await import('../index.tsx');
     }).rejects.toThrow('Could not find root element to mount to');
   });
 
@@ -55,7 +55,7 @@ describe('index.tsx', () => {
     const ReactDOM = await import('react-dom/client');
 
     // Import index.tsx which should now find the root element
-    await import('./index.tsx');
+    await import('../index.tsx');
 
     // Verify createRoot was called with our element
     expect(ReactDOM.default.createRoot).toHaveBeenCalledWith(rootElement);

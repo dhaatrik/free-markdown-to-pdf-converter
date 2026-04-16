@@ -5,6 +5,7 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+// eslint-disable-next-line no-control-regex
 const CONTROL_CHARS_REGEX = /[\u0000-\u001F\u007F-\u009F]/g;
 
 /**
