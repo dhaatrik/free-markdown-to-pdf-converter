@@ -15,7 +15,7 @@ vi.mock('react-dom/client', () => ({
 
 // Mock the App component
 vi.mock('../App', () => ({
-  default: () => <div data-testid="mock-app" />
+  App: () => <div data-testid="mock-app" />
 }));
 
 describe('index.tsx', () => {

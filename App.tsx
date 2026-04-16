@@ -6,7 +6,7 @@ import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus, coy } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import {
-  Settings, Undo, Redo, Download, Trash2,
+  Settings, Undo, Redo, Download, Trash2, RotateCcw,
   Bold, Italic, List, ListOrdered, Quote, Code, Link, Image as ImageIcon,
   Moon, Sun
 } from 'lucide-react';
@@ -110,7 +110,10 @@ Click the **Download PDF** button to get started!
 `;
 
 const App: React.FC = () => {
-  const [markdown, setMarkdown] = useState<string>(DEFAULT_MARKDOWN);
+  // Load initial content from localStorage or use default
+  const savedContent = localStorage.getItem('markpdf_content');
+  const [markdown, setMarkdown] = useState<string>(savedContent !== null ? savedContent : DEFAULT_MARKDOWN);
+  
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [showLineNumbers, setShowLineNumbers] = useState<boolean>(true);
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
@@ -122,7 +125,7 @@ const App: React.FC = () => {
   const isUndoRedo = useRef(false);
 
   // History state for undo/redo
-  const [history, setHistory] = useState<string[]>([DEFAULT_MARKDOWN]);
+  const [history, setHistory] = useState<string[]>(savedContent !== null ? [savedContent] : [DEFAULT_MARKDOWN]);
   const [historyIndex, setHistoryIndex] = useState<number>(0);
 
   // Customization state
@@ -134,6 +137,64 @@ const App: React.FC = () => {
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [pdfHeader, setPdfHeader] = useState<string>('');
   const [pdfFooter, setPdfFooter] = useState<string>('');
+
+  // Load initial settings from localStorage
+  useEffect(() => {
+    const savedSettingsStr = localStorage.getItem('markpdf_settings');
+    if (savedSettingsStr) {
+      try {
+        const savedSettings = JSON.parse(savedSettingsStr);
+        if (savedSettings.uiTheme) setUiTheme(savedSettings.uiTheme);
+        if (savedSettings.showLineNumbers !== undefined) setShowLineNumbers(savedSettings.showLineNumbers);
+        if (savedSettings.fontFamily) setFontFamily(savedSettings.fontFamily);
+        if (savedSettings.fontSize) setFontSize(savedSettings.fontSize);
+        if (savedSettings.textColor) setTextColor(savedSettings.textColor);
+        if (savedSettings.backgroundColor) setBackgroundColor(savedSettings.backgroundColor);
+        if (savedSettings.margin) setMargin(savedSettings.margin);
+        if (savedSettings.codeTheme) setTheme(savedSettings.codeTheme);
+        if (savedSettings.pdfHeader !== undefined) setPdfHeader(savedSettings.pdfHeader);
+        if (savedSettings.pdfFooter !== undefined) setPdfFooter(savedSettings.pdfFooter);
+      } catch (e) {
+        console.error("Failed to parse saved settings", e);
+      }
+    }
+  }, []);
+
+  // Save markdown to localStorage
+  useEffect(() => {
+    localStorage.setItem('markpdf_content', markdown);
+  }, [markdown]);
+
+  // Save settings to localStorage
+  useEffect(() => {
+    const settings = {
+      uiTheme,
+      showLineNumbers,
+      fontFamily,
+      fontSize,
+      textColor,
+      backgroundColor,
+      margin,
+      codeTheme: theme,
+      pdfHeader,
+      pdfFooter
+    };
+    localStorage.setItem('markpdf_settings', JSON.stringify(settings));
+  }, [uiTheme, showLineNumbers, fontFamily, fontSize, textColor, backgroundColor, margin, theme, pdfHeader, pdfFooter]);
+
+  const handleResetSettings = () => {
+    localStorage.removeItem('markpdf_settings');
+    setUiTheme('light');
+    setShowLineNumbers(true);
+    setFontFamily('sans-serif');
+    setFontSize(16);
+    setTextColor('#1e293b');
+    setBackgroundColor('#ffffff');
+    setMargin(15);
+    setTheme('light');
+    setPdfHeader('');
+    setPdfFooter('');
+  };
 
   // Debounced effect to save markdown changes to history
   useEffect(() => {
@@ -382,11 +443,14 @@ const App: React.FC = () => {
                   )}>Document Settings</h3>
                   <div className="space-y-4">
                     <div>
-                      <label className={cn(
-                        "block text-xs font-medium mb-1",
-                        uiTheme === 'dark' ? "text-neutral-400" : "text-neutral-500"
-                      )}>Typography</label>
+                      <label 
+                        htmlFor="typography-select"
+                        className={cn(
+                          "block text-xs font-medium mb-1",
+                          uiTheme === 'dark' ? "text-neutral-400" : "text-neutral-500"
+                        )}>Typography</label>
                       <select
+                        id="typography-select"
                         value={fontFamily}
                         onChange={(e) => setFontFamily(e.target.value)}
                         className={cn(
@@ -402,11 +466,14 @@ const App: React.FC = () => {
 
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className={cn(
-                          "block text-xs font-medium mb-1",
-                          uiTheme === 'dark' ? "text-neutral-400" : "text-neutral-500"
-                        )}>Font Size (px)</label>
+                        <label 
+                          htmlFor="font-size-input"
+                          className={cn(
+                            "block text-xs font-medium mb-1",
+                            uiTheme === 'dark' ? "text-neutral-400" : "text-neutral-500"
+                          )}>Font Size (px)</label>
                         <input
+                          id="font-size-input"
                           type="number"
                           value={fontSize}
                           onChange={(e) => setFontSize(Number(e.target.value))}
@@ -417,11 +484,14 @@ const App: React.FC = () => {
                         />
                       </div>
                       <div>
-                        <label className={cn(
-                          "block text-xs font-medium mb-1",
-                          uiTheme === 'dark' ? "text-neutral-400" : "text-neutral-500"
-                        )}>Margin (mm)</label>
+                        <label 
+                          htmlFor="margin-input"
+                          className={cn(
+                            "block text-xs font-medium mb-1",
+                            uiTheme === 'dark' ? "text-neutral-400" : "text-neutral-500"
+                          )}>Margin (mm)</label>
                         <input
+                          id="margin-input"
                           type="number"
                           value={margin}
                           onChange={(e) => setMargin(Number(e.target.value))}
@@ -435,15 +505,18 @@ const App: React.FC = () => {
 
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className={cn(
-                          "block text-xs font-medium mb-1",
-                          uiTheme === 'dark' ? "text-neutral-400" : "text-neutral-500"
-                        )}>Text Color</label>
+                        <label 
+                          htmlFor="text-color-input"
+                          className={cn(
+                            "block text-xs font-medium mb-1",
+                            uiTheme === 'dark' ? "text-neutral-400" : "text-neutral-500"
+                          )}>Text Color</label>
                         <div className={cn(
                           "flex items-center gap-2 border rounded-md px-2 py-1",
                           uiTheme === 'dark' ? "bg-neutral-800 border-neutral-700" : "bg-neutral-50 border-neutral-200"
                         )}>
                           <input
+                            id="text-color-input"
                             type="color"
                             value={textColor}
                             onChange={(e) => setTextColor(e.target.value)}
@@ -456,15 +529,18 @@ const App: React.FC = () => {
                         </div>
                       </div>
                       <div>
-                        <label className={cn(
-                          "block text-xs font-medium mb-1",
-                          uiTheme === 'dark' ? "text-neutral-400" : "text-neutral-500"
-                        )}>Background</label>
+                        <label 
+                          htmlFor="bg-color-input"
+                          className={cn(
+                            "block text-xs font-medium mb-1",
+                            uiTheme === 'dark' ? "text-neutral-400" : "text-neutral-500"
+                          )}>Background</label>
                         <div className={cn(
                           "flex items-center gap-2 border rounded-md px-2 py-1",
                           uiTheme === 'dark' ? "bg-neutral-800 border-neutral-700" : "bg-neutral-50 border-neutral-200"
                         )}>
                           <input
+                            id="bg-color-input"
                             type="color"
                             value={backgroundColor}
                             onChange={(e) => setBackgroundColor(e.target.value)}
@@ -480,11 +556,14 @@ const App: React.FC = () => {
 
                     <div className="space-y-3 pt-4 border-t border-neutral-100 dark:border-neutral-800">
                       <div>
-                        <label className={cn(
-                          "block text-xs font-medium mb-1",
-                          uiTheme === 'dark' ? "text-neutral-400" : "text-neutral-500"
-                        )}>PDF Header Text</label>
+                        <label 
+                          htmlFor="pdf-header-input"
+                          className={cn(
+                            "block text-xs font-medium mb-1",
+                            uiTheme === 'dark' ? "text-neutral-400" : "text-neutral-500"
+                          )}>PDF Header Text</label>
                         <input
+                          id="pdf-header-input"
                           type="text"
                           value={pdfHeader}
                           onChange={(e) => setPdfHeader(e.target.value)}
@@ -496,11 +575,14 @@ const App: React.FC = () => {
                         />
                       </div>
                       <div>
-                        <label className={cn(
-                          "block text-xs font-medium mb-1",
-                          uiTheme === 'dark' ? "text-neutral-400" : "text-neutral-500"
-                        )}>PDF Footer Text</label>
+                        <label 
+                          htmlFor="pdf-footer-input"
+                          className={cn(
+                            "block text-xs font-medium mb-1",
+                            uiTheme === 'dark' ? "text-neutral-400" : "text-neutral-500"
+                          )}>PDF Footer Text</label>
                         <input
+                          id="pdf-footer-input"
                           type="text"
                           value={pdfFooter}
                           onChange={(e) => setPdfFooter(e.target.value)}
@@ -517,11 +599,14 @@ const App: React.FC = () => {
                       "pt-4 border-t flex items-center justify-between",
                       uiTheme === 'dark' ? "border-neutral-800" : "border-neutral-100"
                     )}>
-                      <label className={cn(
-                        "text-sm font-medium",
-                        uiTheme === 'dark' ? "text-neutral-300" : "text-neutral-700"
-                      )}>Code Block Theme</label>
+                      <label 
+                        htmlFor="code-theme-select"
+                        className={cn(
+                          "text-sm font-medium",
+                          uiTheme === 'dark' ? "text-neutral-300" : "text-neutral-700"
+                        )}>Code Block Theme</label>
                       <select
+                        id="code-theme-select"
                         value={theme}
                         onChange={(e) => setTheme(e.target.value as 'light' | 'dark')}
                         className={cn(
@@ -538,12 +623,15 @@ const App: React.FC = () => {
                       "pt-4 border-t flex items-center justify-between",
                       uiTheme === 'dark' ? "border-neutral-800" : "border-neutral-100"
                     )}>
-                      <label className={cn(
-                        "text-sm font-medium",
-                        uiTheme === 'dark' ? "text-neutral-300" : "text-neutral-700"
-                      )}>Show Line Numbers</label>
+                      <label 
+                        id="line-numbers-label"
+                        className={cn(
+                          "text-sm font-medium",
+                          uiTheme === 'dark' ? "text-neutral-300" : "text-neutral-700"
+                        )}>Show Line Numbers</label>
                       <button
                         onClick={() => setShowLineNumbers(!showLineNumbers)}
+                        aria-labelledby="line-numbers-label"
                         className={cn(
                           "relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2",
                           showLineNumbers ? "bg-indigo-600" : (uiTheme === 'dark' ? "bg-neutral-700" : "bg-neutral-200")
@@ -555,6 +643,21 @@ const App: React.FC = () => {
                             showLineNumbers ? "translate-x-5" : "translate-x-1"
                           )}
                         />
+                      </button>
+                    </div>
+
+                    <div className="pt-4 border-t">
+                      <button
+                        onClick={handleResetSettings}
+                        className={cn(
+                          "w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-colors duration-200",
+                          uiTheme === 'dark' 
+                            ? "bg-neutral-800 text-neutral-200 hover:bg-neutral-700 border border-neutral-700" 
+                            : "bg-neutral-100 text-neutral-700 hover:bg-neutral-200 border border-neutral-200"
+                        )}
+                      >
+                        <RotateCcw className="w-4 h-4" />
+                        <span>Reset to Defaults</span>
                       </button>
                     </div>
                   </div>
@@ -694,5 +797,4 @@ const App: React.FC = () => {
   );
 };
 
-export default App;
-
+export { App };
