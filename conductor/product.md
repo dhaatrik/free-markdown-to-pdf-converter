@@ -14,7 +14,9 @@ MarkPDF is a privacy-first web application that converts Markdown notes into pro
 ## Core Features
 - **Live Split-Pane Editor**: A distraction-free, syntax-highlighted editor with line numbers.
 - **Real-time Preview**: Instant transformation of Markdown into styled PDF layouts.
+- **Auto-save & Persistence**: Automatically saves your Markdown content and custom settings to your browser's Local Storage, ensuring your work is preserved even if you refresh the page or restart your session.
 - **Extensive Customization**: Options to customize typography, text colors, background colors, and page margins.
+- **Accessibility First**: An accessible interface with correctly linked form controls and full keyboard navigation support.
 - **Syntax Highlighting**: Deep-coloring for code blocks with dynamic light/dark themes.
 - **Responsive & Accessible**: Works across devices with full dark mode support.
 - **Native Print Engine**: Leverages the browser's optimized print engine for pristine vector PDFs.

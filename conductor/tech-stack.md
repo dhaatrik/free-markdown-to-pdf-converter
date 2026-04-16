@@ -15,6 +15,9 @@
 - **Remark-GFM**: Adds support for GitHub Flavored Markdown (tables, strikethrough, task lists).
 - **React-Syntax-Highlighter**: For code block highlighting.
 
+## Storage & Persistence
+- **Browser Local Storage**: Used for client-side persistence of user content and application settings without requiring a backend.
+
 ## Testing
 - **Vitest**: Blazing fast unit test framework.
 - **React Testing Library**: For testing React components in a user-centric way.
